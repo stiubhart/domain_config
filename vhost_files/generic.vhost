@@ -1,0 +1,111 @@
+#COMMENT#server {
+#COMMENT#        listen *:80;
+#COMMENT#        server_name #DOMAIN#;
+#COMMENT#        return 301 https://#DOMAIN#\$request_uri;
+#COMMENT#}
+
+server {
+        listen 443 ssl;
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+        #COMMENT#ssl_certificate /etc/letsencrypt/live/#DOMAIN#/fullchain.pem;
+        #COMMENT#ssl_certificate_key /etc/letsencrypt/live/#DOMAIN#/privkey.pem;
+
+        server_name www.#DOMAIN#;
+        return 301 https://#DOMAIN#\$request_uri;
+}
+
+server {
+        listen *:80;
+        listen *:443;
+
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+        #COMMENT#ssl_certificate /etc/letsencrypt/live/#DOMAIN#/fullchain.pem;
+        #COMMENT#ssl_certificate_key /etc/letsencrypt/live/#DOMAIN#/privkey.pem;
+
+        root "/var/www/#DOMAIN#/web/";
+        index index.php index.html;
+        server_name #DOMAIN#;
+
+        # serve static files directly
+        location ~* \.(jpg|jpeg|gif|css|png|js|ico|html)$ {
+                access_log off;
+                expires max;
+        }
+
+        # removes trailing slashes (prevents SEO duplicate content issues)
+        if (!-d \$request_filename) {
+                rewrite ^/(.+)/$ /$1 permanent;
+        }
+
+        location = /favicon.ico {
+            log_not_found off;
+            access_log off;
+        }
+
+        location = /robots.txt {
+            allow all;
+            log_not_found off;
+            access_log off;
+        }
+
+        error_page 400 /error/400.html;
+        error_page 401 /error/401.html;
+        error_page 403 /error/403.html;
+        error_page 404 /error/404.html;
+        error_page 405 /error/405.html;
+        error_page 500 /error/500.html;
+        error_page 502 /error/502.html;
+        error_page 503 /error/503.html;
+        recursive_error_pages on;
+
+        location = /error/400.html {
+            internal;
+        }
+        location = /error/401.html {
+            internal;
+        }
+        location = /error/403.html {
+            internal;
+        }
+        location = /error/404.html {
+            internal;
+        }
+        location = /error/405.html {
+            internal;
+        }
+        location = /error/500.html {
+            internal;
+        }
+        location = /error/502.html {
+            internal;
+        }
+        location = /error/503.html {
+            internal;
+        }
+
+        error_log /var/www/#DOMAIN#/log/error.log;
+        access_log /var/www/#DOMAIN#/log/access.log combined;
+
+        location ~ \.php$ {
+                try_files \$uri =404;
+                include /etc/nginx/fastcgi_params;
+                fastcgi_pass unix:/var/lib/php5-fpm/web21.sock;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+                fastcgi_intercept_errors on;
+        }
+
+        location ~ /\.ht {
+                deny all;
+        }
+
+        location ~ /.well-known {
+                allow all;
+        }
+
+        location ~ /\.(?!well-known/acme-challenge/) {
+            allow all;
+        }
+
+}
+

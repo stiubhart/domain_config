@@ -1,0 +1,8 @@
+# It is recommended that the file prefix ends in a . (dot)
+file_prefix: stiubhart.
+
+root:
+    web: /var/www/
+    sites-enabled: /etc/nginx/sites-enabled/
+    sites-available: /etc/nginx/sites-available/
+
