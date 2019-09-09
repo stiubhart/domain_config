@@ -6,7 +6,7 @@ Quickly configure a domain name .vhost file with an SSL Certificate using Let's 
 
 # Dependencies 
 * Python3
-* python3-yamal: `sudo apt install python3-yaml`
+* python3-yaml: `sudo apt install python3-yaml`
 * Certbot By Let's Encrypt
 
 # Usage
