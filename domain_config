@@ -4,7 +4,7 @@
 # sudo apt install python3-yaml
 #
 
-import yaml, sys, getopt, re, os, subprocess
+import yaml, sys, getopt, re, os, subprocess, time
 from subprocess import Popen, PIPE
 
 
@@ -192,13 +192,14 @@ def generateSSLCertificatte(domain):
     print(cmd2)
     print()
 
+    time.sleep(5) # Certbot won't work withoutt a wee wait first
+
     cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + domain + '/web/', '-d', domain]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = p.communicate()[0]
     output = format(output)
 
     if "The following errors were reported by the server" in output:
-        print()
         print(output)
         print()
         print(colours.RED + "Error generating certificatei. Try running the command above in your terminal" + colours.END)
@@ -209,7 +210,6 @@ def generateSSLCertificatte(domain):
         print(colours.GREEN + 'SSL Certificate generated' + colours.END)
         return
 
-    print()
     print(output)
     print()
     print(colours.RED +'OOPS! There may be an error configuring your SSL certificate for ' + colours.BLUE + 'http://' + domain + colours.END)
