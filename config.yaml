@@ -1,8 +1,8 @@
 # It is recommended that the file prefix ends in a . (dot)
 file_prefix: stiubhart.
+php_sock: /var/run/php5-fpm.sock
 
 root:
     web: /var/www/
     sites-enabled: /etc/nginx/sites-enabled/
     sites-available: /etc/nginx/sites-available/
-
