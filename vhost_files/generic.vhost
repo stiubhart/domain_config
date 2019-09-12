@@ -22,7 +22,7 @@ server {
         #COMMENT#ssl_certificate /etc/letsencrypt/live/#DOMAIN#/fullchain.pem;
         #COMMENT#ssl_certificate_key /etc/letsencrypt/live/#DOMAIN#/privkey.pem;
 
-        root "/var/www/#DOMAIN#/web/";
+        root "/var/www/#FILE_PREFIX##DOMAIN#/web/";
         index index.php index.html;
         server_name #DOMAIN#;
 
@@ -83,13 +83,13 @@ server {
             internal;
         }
 
-        error_log /var/www/#DOMAIN#/log/error.log;
-        access_log /var/www/#DOMAIN#/log/access.log combined;
+        error_log /var/www/#FILE_PREFIX##DOMAIN#/log/error.log;
+        access_log /var/www/#FILE_PREFIX##DOMAIN#/log/access.log combined;
 
         location ~ \.php$ {
                 try_files $uri =404;
                 fastcgi_split_path_info ^(.+\.php)(/.+)$;
-                fastcgi_pass unix:/var/run/php5-fpm.sock;
+                fastcgi_pass unix:#PHP_SOCK#;
                 fastcgi_index index.php;
                 include /etc/nginx/fastcgi_params;
                 fastcgi_intercept_errors on;
@@ -110,4 +110,3 @@ server {
         }
 
 }
-
