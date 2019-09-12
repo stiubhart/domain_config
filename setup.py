@@ -3,7 +3,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 setuptools.setup(
      name='domain_config',  
-     version='0.1',
+     version='0.1.2',
      scripts=['domain_config'] ,
      author="Stiubhart Deans",
      author_email="stiubhart@btinternet.com",
