@@ -1,0 +1,4 @@
+include config.yaml
+include template.html
+recursive-include vhost_files
+recursive-include error_pages
