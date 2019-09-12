@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import yaml, sys, getopt, re, os, subprocess, time
+import yaml, sys, getopt, re, os, subprocess, time, shutil
 from subprocess import Popen, PIPE
 
 
@@ -80,6 +80,7 @@ def main(argv):
             print()
             sys.exit()
         else:
+            removeSSLCerttificate(domain)
             generateSSLCertificatte(domain)
             withSSL = buildDomainVhost(domain, file_prefix, host_type)
 
@@ -117,6 +118,8 @@ def buildDomainVhost(domain, file_prefix, host_type):
 
     vhost = vhost.replace('#COMMENT#', comment)
     vhost = vhost.replace('#DOMAIN#', domain)
+    vhost = vhost.replace('#FILE_PREFIX#', file_prefix)
+    vhost = vhost.replace('#PHP_SOCK#', config()['php_sock'])
 
     my_file = config()['root']['sites-available'] + file_prefix + domain + ".vhost";
     symlink_file = config()['root']['sites-enabled'] + file_prefix + domain + ".vhost";
@@ -140,57 +143,54 @@ def buildDomainVhost(domain, file_prefix, host_type):
     if not os.path.islink(symlink_file):
         os.symlink(my_file, symlink_file);
 
-    buildWebFiles(domain)
+    print (colours.GREEN + "Vhost file created" + colours.END)
 
+    buildWebFiles(domain, file_prefix)
+
+    status = restartNginx(domain, file_prefix)
+    if status is False:
+        deleteDomainVhost(domain, file_prefix)
+        sys.exit()
+
+    return checkSSLValidation(domain)
+
+def restartNginx(domain, file_prefix):
     output = ''.join(os.popen('sudo nginx -t 2>&1').read().split())
     success = output[-10:len(output)]
 
     if (success != "successful"):
         print (colours.RED + "Nginx config syntax error" + colours.END + "\n\n")
-        deleteDomainVhost(domain, file_prefix)
+        return False
+    else:
+        print (colours.YELLOW + "Restarting Nginx..." + colours.END)
+        cmd = ['service', 'nginx', 'restart']
+        p = subprocess.call(cmd)
+        return True
 
-        sys.exit()
-
-    print (colours.GREEN + "Vhost file created successfully" + colours.END)
-    print (colours.YELLOW + "Restarting Nginx..." + colours.END)
-
-    os.popen('sudo service nginx restart')
-
-    return checkSSLValidation(domain)
-
-
-def buildWebFiles(domain):
+def buildWebFiles(domain, file_prefix):
     dirname = os.path.dirname(__file__)
 
-    webroot = config()['root']['web'] + domain + "/web"
+    webroot = config()['root']['web'] + file_prefix + domain + "/web"
     if not os.path.exists(webroot):
         os.popen('sudo mkdir -p ' + webroot)
-
-    logroot = config()['root']['web'] + domain + "/log"
+    
+    logroot = config()['root']['web'] + file_prefix + domain + "/log"
     if not os.path.exists(logroot):
         os.popen('sudo mkdir -p ' + logroot)
-
-    errorroot = config()['root']['web'] + domain + "/web/error"
+    
+    errorroot = config()['root']['web'] + file_prefix + domain + "/web/error"
     if not os.path.exists(errorroot):
         os.popen('sudo cp -r ' + dirname + '/error_pages ' + errorroot)
-
-    indexHtml = config()['root']['web'] + domain + "/web/index.html"
-    indexPhp = config()['root']['web'] + domain + "/web/index.php"
+    
+    indexHtml = config()['root']['web'] + file_prefix + domain + "/web/index.html"
+    indexPhp = config()['root']['web'] + file_prefix + domain + "/web/index.php"
     if not os.path.exists(indexHtml) and not os.path.exists(indexPhp):
         os.popen('sudo cp  ' + dirname + '/template.php ' + indexPhp)
 
 
 def generateSSLCertificatte(domain):
     print(colours.YELLOW + "Generating SSL Certificate " + colours.END)
-
-    cmd2 = 'sudo certbot certonly --webroot -w ' + config()['root']['web'] + domain + '/web/ -d ' + domain
-    print()
-    print(cmd2)
-    print()
-
-    time.sleep(5) # Certbot won't work withoutt a wee wait first
-
-    cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + domain + '/web/', '-d', domain]
+    cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + config()['file_prefix'] + domain + '/web/', '-d', domain]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = p.communicate()[0]
     output = format(output)
@@ -218,19 +218,29 @@ def deleteDomainVhost(domain, file_prefix):
     symlink_file = config()['root']['sites-enabled'] + file_prefix + domain + ".vhost";
 
     if (os.path.exists(my_file)):
-        os.unlink(my_file);
-    
-    if (os.path.exists(symlink_file)):
-        os.unlink(symlink_file);
+        os.unlink(my_file)
+
+    if (os.path.islink(symlink_file)):
+        os.unlink(symlink_file)
 
     if not os.path.exists(config()['root']['web'] + file_prefix + 'remove.at.your.peril/'):
         os.makedirs(config()['root']['web'] + file_prefix + 'remove.at.your.peril/')
 
-    if os.path.exists(config()['root']['web'] + domain):
-        os.popen('mv ' + config()['root']['web'] + domain + ' ' + config()['root']['web'] + file_prefix + 'remove.at.your.peril/' + domain).read()
+    if os.path.exists(config()['root']['web'] + file_prefix + domain):
+        os.popen('rsync -av ' + config()['root']['web'] + file_prefix + domain + ' ' + config()['root']['web'] + file_prefix+ 'remove.at.your.peril/ --remove-source-files && rm -r ' + config()['root']['web'] + file_prefix + domain).read()
 
-    print (colours.RED + "Removed generated files" + colours.END );
+    removeSSLCerttificate(domain)
 
+    restartNginx(domain, file_prefix)
+
+    print (colours.RED + "Removed generated files" + colours.END )
+
+
+def removeSSLCerttificate(domain):
+    certts = '/etc/letsencrypt/live/' + domain
+
+    if (os.path.exists(certts)):
+        shutil.rmtree(certts)
 
 def checkSSLValidation(domain):
     output = os.popen("certbot certificates -d " + domain + " 2>&1").read()
@@ -239,7 +249,6 @@ def checkSSLValidation(domain):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
 
 
 
