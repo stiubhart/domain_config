@@ -231,7 +231,7 @@ def deleteDomainVhost(domain, file_prefix):
         os.makedirs(config()['root']['web'] + file_prefix + 'remove.at.your.peril/')
 
     if os.path.exists(config()['root']['web'] + domain):
-        os.popen('mv ' + config()['root']['web'] + domain + ' ' + config()['root']['web'] + file_prefix+ 'remove.at.your.peril/' + domain).read()
+        os.popen('mv ' + config()['root']['web'] + domain + ' ' + config()['root']['web'] + file_prefix + 'remove.at.your.peril/' + domain).read()
 
     print (colours.RED + "Removed generated files" + colours.END );
 
