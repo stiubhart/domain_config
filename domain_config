@@ -169,26 +169,30 @@ def buildWebFiles(domain):
     webroot = config()['root']['web'] + domain + "/web"
     if not os.path.exists(webroot):
         os.popen('sudo mkdir -p ' + webroot)
-    
+
     logroot = config()['root']['web'] + domain + "/log"
     if not os.path.exists(logroot):
         os.popen('sudo mkdir -p ' + logroot)
-    
+
     errorroot = config()['root']['web'] + domain + "/web/error"
     if not os.path.exists(errorroot):
         os.popen('sudo cp -r ' + dirname + '/error_pages ' + errorroot)
-    
+
     indexHtml = config()['root']['web'] + domain + "/web/index.html"
     indexPhp = config()['root']['web'] + domain + "/web/index.php"
     if not os.path.exists(indexHtml) and not os.path.exists(indexPhp):
-        os.popen('sudo cp  ' + dirname + '/template.html ' + indexHtml)
+        os.popen('sudo cp  ' + dirname + '/template.php ' + indexPhp)
 
 
 def generateSSLCertificatte(domain):
     print(colours.YELLOW + "Generating SSL Certificate " + colours.END)
 
-    # cmd = 'certbot certonly --webroot -w ' + config()['root']['web'] + domain + '/web/ -d ' + domain
-    cmd = ['certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + domain + '/web/', '-d', domain]
+    cmd2 = 'sudo certbot certonly --webroot -w ' + config()['root']['web'] + domain + '/web/ -d ' + domain
+    print()
+    print(cmd2)
+    print()
+
+    cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + domain + '/web/', '-d', domain]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = p.communicate()[0]
     output = format(output)
@@ -197,7 +201,7 @@ def generateSSLCertificatte(domain):
         print()
         print(output)
         print()
-        print(colours.RED + "Error generating certificate" + colours.END)
+        print(colours.RED + "Error generating certificatei. Try running the command above in your terminal" + colours.END)
         print()
         sys.exit()
 
