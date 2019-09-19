@@ -5,7 +5,7 @@ from subprocess import Popen, PIPE
 
 
 class colours:
-    # Display differentt colours and fonts
+    # Display differentt colours and fonts
     HEADER = '\033[95m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
@@ -34,10 +34,12 @@ def main(argv):
 
     domain = config()['root']
     host_type = 'general'
-    file_prefix = config()['file_prefix']
     domain_present = False
     action = 'create'
     dirname = os.path.dirname(__file__)
+    file_prefix = config()['file_prefix']
+    if file_prefix is None:
+        file_prefix = ''
 
     try:
         opts, args = getopt.getopt(argv, "ht:d:", ["help", "domain=", "type=", "delete"])
@@ -81,7 +83,7 @@ def main(argv):
             sys.exit()
         else:
             removeSSLCerttificate(domain)
-            generateSSLCertificatte(domain)
+            generateSSLCertificatte(domain, file_prefix)
             withSSL = buildDomainVhost(domain, file_prefix, host_type)
 
         if withSSL == True:
@@ -104,7 +106,10 @@ def buildDomainVhost(domain, file_prefix, host_type):
     print (colours.YELLOW, "About to write VHost file for " + colours.BLUE + domain + colours.END, sep='')
 
     ssl = checkSSLValidation(domain)
+    letsencrypt_dir = getLetsEncryptDir(domain)
+
     comment = '' if ssl else '# ';
+    letsencrypt_dir = letsencrypt_dir if len(letsencrypt_dir) > 1 else domain;
 
     dirname = os.path.dirname(__file__)
     if host_type == 'general':
@@ -113,13 +118,14 @@ def buildDomainVhost(domain, file_prefix, host_type):
         print(colours.RED + 'host_type: ' + host_type + ' not recognised' + colours.END)
         print()
         sys.exit()
-    
+
     vhost = vhost_file.read()
 
     vhost = vhost.replace('#COMMENT#', comment)
     vhost = vhost.replace('#DOMAIN#', domain)
     vhost = vhost.replace('#FILE_PREFIX#', file_prefix)
     vhost = vhost.replace('#PHP_SOCK#', config()['php_sock'])
+    vhost = vhost.replace('#LETSENCRYPT_DIR#', letsencrypt_dir)
 
     my_file = config()['root']['sites-available'] + file_prefix + domain + ".vhost";
     symlink_file = config()['root']['sites-enabled'] + file_prefix + domain + ".vhost";
@@ -132,8 +138,14 @@ def buildDomainVhost(domain, file_prefix, host_type):
 
     output = os.popen("sudo grep -ni ' " + domain + "' " + config()['root']['sites-available'] + "* 2>&1").read()
     if len(output) > 1:
-            print ("\n" + colours.RED, "The Domain " + colours.BLUE + domain + colours.RED + " may already be taken" + colours.END + "\n\n", sep='')
-            printt ()
+            print ("\n" + colours.RED, "The Domain " + colours.BLUE + domain + colours.RED + " is already taken" + colours.END + "\n\n", sep='')
+            if not ssl:
+                print (colours.YELLOW + "No valid SSL Certificate, let's get it")
+                generateSSLCertificatte(domain, file_prefix)
+                letsencrypt_dir = getLetsEncryptDir(domain)
+            print ("ssl_certificate /etc/letsencrypt/live/" + letsencrypt_dir + "/fullchain.pem;")
+            print ("ssl_certificate_key /etc/letsencrypt/live/" + letsencrypt_dir + "/privkey.pem;")
+            print ()
             sys.exit()
 
     f = open(my_file, 'w')
@@ -159,6 +171,7 @@ def restartNginx(domain, file_prefix):
     success = output[-10:len(output)]
 
     if (success != "successful"):
+        print(output)
         print (colours.RED + "Nginx config syntax error" + colours.END + "\n\n")
         return False
     else:
@@ -170,9 +183,13 @@ def restartNginx(domain, file_prefix):
 def buildWebFiles(domain, file_prefix):
     dirname = os.path.dirname(__file__)
 
+    webroot = config()['root']['web'] + file_prefix + domain
+    if not os.path.exists(webroot):
+        subprocess.call(['sudo', 'mkdir', webroot])
+
     webroot = config()['root']['web'] + file_prefix + domain + "/web"
     if not os.path.exists(webroot):
-        os.popen('sudo mkdir -p ' + webroot)
+        subprocess.call(['sudo', 'mkdir', webroot])
     
     logroot = config()['root']['web'] + file_prefix + domain + "/log"
     if not os.path.exists(logroot):
@@ -188,9 +205,9 @@ def buildWebFiles(domain, file_prefix):
         os.popen('sudo cp  ' + dirname + '/template.php ' + indexPhp)
 
 
-def generateSSLCertificatte(domain):
+def generateSSLCertificatte(domain, file_prefix):
     print(colours.YELLOW + "Generating SSL Certificate " + colours.END)
-    cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + config()['file_prefix'] + domain + '/web/', '-d', domain]
+    cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + file_prefix + domain + '/web/', '-d', domain]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = p.communicate()[0]
     output = format(output)
@@ -237,14 +254,40 @@ def deleteDomainVhost(domain, file_prefix):
 
 
 def removeSSLCerttificate(domain):
-    certts = '/etc/letsencrypt/live/' + domain
+    letsencrypt_dir = getLetsEncryptDir(domain)
+    letsencrypt_dir = letsencrypt_dir if len(letsencrypt_dir) > 1 else domain;
 
-    if (os.path.exists(certts)):
-        shutil.rmtree(certts)
+    if len(letsencrypt_dir) > 5:
+        certs = '/etc/letsencrypt/live/' + letsencrypt_dir
+        if (os.path.exists(certs)):
+            shutil.rmtree(certs)
+
+        certs = '/etc/letsencrypt/archive/' + letsencrypt_dir
+        if (os.path.exists(certs)):
+            shutil.rmtree(certs)
+
+        certs = '/etc/letsencrypt/renewal/' + letsencrypt_dir + '.conf'
+        if (os.path.exists(certs)):
+            os.remove(certs)
+
 
 def checkSSLValidation(domain):
     output = os.popen("certbot certificates -d " + domain + " 2>&1").read()
     return "(VALID:" in output
+
+
+def getLetsEncryptDir(domain):
+    cmd = 'sudo certbot certificates | grep \'/' + domain + '\''
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=True)
+    output = p.communicate()[0]
+    output = format(output)
+
+    directory = ''
+    if "Certificate Path: " in output:
+        result = re.search('letsencrypt\/live\/(.*)\/fullchain', output)
+        directory = result.group(1)
+
+    return directory
 
 
 if __name__ == "__main__":
