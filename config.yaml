@@ -1,6 +1,6 @@
 # It is recommended that the file prefix ends in a . (dot)
 file_prefix: stiubhart.
-php_sock: /var/run/php5-fpm.sock
+php_sock: /run/php/php7.0-fpm.sock
 
 root:
     web: /var/www/
