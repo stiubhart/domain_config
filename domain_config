@@ -77,7 +77,7 @@ def main(argv):
 
         withSSL = buildDomainVhost(domain, file_prefix, host_type)
         if withSSL == True:
-            print(colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + domain + "/web/")
+            print(colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + file_prefix + domain + "/web/")
             print(colours.GREEN, "SSL Certificate already exists for ", colours.BLUE,  colours.UNDERLINE, "https://", domain, colours.END, sep='')
             print()
             sys.exit()
@@ -88,7 +88,7 @@ def main(argv):
 
         if withSSL == True:
             print(colours.GREEN + "Success!" + colours.END)
-            print(colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + domain + "/web/")
+            print(colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + file_prefix + domain + "/web/")
             print(colours.BLUE + colours.UNDERLINE + 'https://' + domain + colours.END)
         else:
             print(colours.RED +'There may be an error configuring your SSL certificate for ' + colours.BLUE + 'http://' + domain + colours.END)
