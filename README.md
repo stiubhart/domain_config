@@ -19,3 +19,19 @@ Quickly configure a domain name .vhost file with an SSL Certificate using Let's 
 `domain_config/domain_config --domain=example.com`<br>
 or to delete a domain:<br>
 `domain_config/domain_config --domain=example.com --delete`
+
+# Output - example
+`Your domain is: example.com`  
+`Create domain`  
+` `  
+`About to write VHost file for example.com`  
+`Vhost file created`  
+`Restarting Nginx...`  
+`Generating SSL Certificate`  
+`SSL Certificate generated`  
+`About to write VHost file for example.com`  
+`Vhost file created`  
+`Restarting Nginx...`  
+`Success!`  
+`Your web root is: /var/www/prefix.example.com/web/`  
+`https://example.com`  
