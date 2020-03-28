@@ -103,7 +103,7 @@ def main(argv):
 
 
 def buildDomainVhost(domain, file_prefix, host_type):
-    print (colours.YELLOW, "About to write VHost file for " + colours.BLUE + domain + colours.END, sep='')
+    print (colours.YELLOW, "About to write VHost file for " + colours.BLUE + domain + colours.END)
 
     ssl = checkSSLValidation(domain)
     letsencrypt_dir = getLetsEncryptDir(domain)
@@ -138,7 +138,7 @@ def buildDomainVhost(domain, file_prefix, host_type):
 
     output = os.popen("sudo grep -ni ' " + domain + "' " + config()['root']['sites-available'] + "* 2>&1").read()
     if len(output) > 1:
-            print ("\n" + colours.RED, "The Domain " + colours.BLUE + domain + colours.RED + " is already taken" + colours.END + "\n\n", sep='')
+            print ("\n" + colours.RED, "The Domain " + colours.BLUE + domain + colours.RED + " is already taken" + colours.END + "\n\n")
             if not ssl:
                 print (colours.YELLOW + "No valid SSL Certificate, let's get it")
                 generateSSLCertificatte(domain, file_prefix)
