@@ -3,10 +3,10 @@ Quickly configure a domain name .vhost file with an SSL Certificate using Let's 
 
 # Install
 `git clone git@github.com:stiubhart/domain_config.git`  
-`chmod +x domain_config/domain_config.py`
-`chmod +x domain_config/domain_config`
-`mv domain_config/ /usr/local/`
-`mv /usr/local/domain_config/domain_config /usr/local/bin/`
+`chmod +x domain_config/domain_config.py`  
+`chmod +x domain_config/domain_config`  
+`mv domain_config/ /usr/local/`  
+`mv /usr/local/domain_config/domain_config /usr/local/bin/`  
 * Make sure to edit config.yaml to suit your needs
 
 # Dependencies 
