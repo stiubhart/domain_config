@@ -6,7 +6,7 @@ Quickly configure a domain name .vhost file with an SSL Certificate using Let's 
 `chmod +x domain_config/domain_config*`  
 `mv domain_config/ /usr/local/`  
 `mv /usr/local/domain_config/domain_config /usr/local/bin/`  
-* Make sure to edit config.yaml to suit your needs
+* Make sure to edit config.yaml to suit your needs at `/usr/local/domain_config/config.yaml`
 
 # Dependencies 
 * Python3
