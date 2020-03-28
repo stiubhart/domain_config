@@ -1,0 +1,2 @@
+#!/bin/sh
+python /usr/local/domain_config/domain_config.py
