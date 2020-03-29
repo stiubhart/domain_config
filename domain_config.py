@@ -25,12 +25,12 @@ def config():
         try:
             return yaml.safe_load(stream)
         except yaml.YAMLError as exc:
-            print(exc)
+            print exc
             sys.exit()
 
 
 def main(argv):
-    print()
+    print
 
     domain = config()['root']
     host_type = 'general'
@@ -44,11 +44,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "ht:d:", ["help", "domain=", "type=", "delete"])
     except getopt.GetoptError:
-        print ('1: you must choose a domain [-d | --domain]')
+        print '1: you must choose a domain [-d | --domain]'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print ('2: you must choose a domain [-d | --domain]')
+            print '2: you must choose a domain [-d | --domain]'
             sys.exit()
         elif opt in ("-d", "--domain"):
             domain = arg
@@ -59,27 +59,27 @@ def main(argv):
             action = 'delete'
 
     if domain_present == False:
-        print (colours.RED, 'you must choose a domain [-d | --domain]', colours.END)
+        print colours.RED, 'you must choose a domain [-d | --domain]', colours.END
         sys.exit()
 
     domain = re.sub(r'[^0-9a-zA-Z\.\-]', '', domain).lower()
 
     if len(domain) <= 5:
-        print (colours.RED, "Domian name is too short, must be greater than 5 characters.", colours.END)
+        print colours.RED, "Domian name is too short, must be greater than 5 characters.", colours.END
         sys.exit()
 
-    print ('Your domain is: ' + colours.BLUE + domain + colours.END)
+    print 'Your domain is: ' + colours.BLUE + domain + colours.END
 
     if action == 'create':
-        print ('Create domain')
-        # print ('Host Type: ', host_type)
-        print()
+        print 'Create domain'
+        # print 'Host Type: ', host_type
+        print
 
         withSSL = buildDomainVhost(domain, file_prefix, host_type)
         if withSSL == True:
-            print(colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + file_prefix + domain + "/web/")
-            print(colours.GREEN, "SSL Certificate already exists for ", colours.BLUE,  colours.UNDERLINE, "https://", domain, colours.END)
-            print()
+            print colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + file_prefix + domain + "/web/"
+            print colours.GREEN, "SSL Certificate already exists for ", colours.BLUE,  colours.UNDERLINE, "https://", domain, colours.END
+            print
             sys.exit()
         else:
             removeSSLCerttificate(domain)
@@ -87,23 +87,23 @@ def main(argv):
             withSSL = buildDomainVhost(domain, file_prefix, host_type)
 
         if withSSL == True:
-            print(colours.GREEN + "Success!" + colours.END)
-            print(colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + file_prefix + domain + "/web/")
-            print(colours.BLUE + colours.UNDERLINE + 'https://' + domain + colours.END)
+            print colours.GREEN + "Success!" + colours.END
+            print colours.YELLOW + 'Your web root is: ' + colours.END + config()['root']['web'] + file_prefix + domain + "/web/"
+            print colours.BLUE + colours.UNDERLINE + 'https://' + domain + colours.END
         else:
-            print(colours.RED +'There may be an error configuring your SSL certificate for ' + colours.BLUE + 'http://' + domain + colours.END)
+            print colours.RED +'There may be an error configuring your SSL certificate for ' + colours.BLUE + 'http://' + domain + colours.END
 
     elif action == 'delete':
-        print ('Delete domain')
-        print()
+        print 'Delete domain'
+        print
         deleteDomainVhost(domain, file_prefix)
 
-    print()
+    print
 
 
 
 def buildDomainVhost(domain, file_prefix, host_type):
-    print (colours.YELLOW, "About to write VHost file for " + colours.BLUE + domain + colours.END)
+    print colours.YELLOW, "About to write VHost file for " + colours.BLUE + domain + colours.END
 
     ssl = checkSSLValidation(domain)
     letsencrypt_dir = getLetsEncryptDir(domain)
@@ -115,8 +115,8 @@ def buildDomainVhost(domain, file_prefix, host_type):
     if host_type == 'general':
         vhost_file = open(os.path.join(dirname, "vhost_files/generic.vhost"), "r")
     else:
-        print(colours.RED + 'host_type: ' + host_type + ' not recognised' + colours.END)
-        print()
+        print colours.RED + 'host_type: ' + host_type + ' not recognised' + colours.END
+        print
         sys.exit()
 
     vhost = vhost_file.read()
@@ -138,14 +138,14 @@ def buildDomainVhost(domain, file_prefix, host_type):
 
     output = os.popen("sudo grep -ni ' " + domain + "' " + config()['root']['sites-available'] + "* 2>&1").read()
     if len(output) > 1:
-            print ("\n" + colours.RED, "The Domain " + colours.BLUE + domain + colours.RED + " is already taken" + colours.END + "\n\n")
+            print "\n" + colours.RED, "The Domain " + colours.BLUE + domain + colours.RED + " is already taken" + colours.END + "\n\n"
             if not ssl:
-                print (colours.YELLOW + "No valid SSL Certificate, let's get it")
+                print colours.YELLOW + "No valid SSL Certificate, let's get it"
                 generateSSLCertificatte(domain, file_prefix)
                 letsencrypt_dir = getLetsEncryptDir(domain)
-            print ("ssl_certificate /etc/letsencrypt/live/" + letsencrypt_dir + "/fullchain.pem;")
-            print ("ssl_certificate_key /etc/letsencrypt/live/" + letsencrypt_dir + "/privkey.pem;")
-            print ()
+            print "ssl_certificate /etc/letsencrypt/live/" + letsencrypt_dir + "/fullchain.pem;"
+            print "ssl_certificate_key /etc/letsencrypt/live/" + letsencrypt_dir + "/privkey.pem;"
+            print
             sys.exit()
 
     f = open(my_file, 'w')
@@ -155,7 +155,7 @@ def buildDomainVhost(domain, file_prefix, host_type):
     if not os.path.islink(symlink_file):
         os.symlink(my_file, symlink_file);
 
-    print (colours.GREEN + "Vhost file created" + colours.END)
+    print colours.GREEN + "Vhost file created" + colours.END
 
     buildWebFiles(domain, file_prefix)
 
@@ -171,11 +171,11 @@ def restartNginx(domain, file_prefix):
     success = output[-10:len(output)]
 
     if (success != "successful"):
-        print(output)
-        print (colours.RED + "Nginx config syntax error" + colours.END + "\n\n")
+        print output
+        print colours.RED + "Nginx config syntax error" + colours.END + "\n\n"
         return False
     else:
-        print (colours.YELLOW + "Restarting Nginx..." + colours.END)
+        print colours.YELLOW + "Restarting Nginx..." + colours.END
         cmd = ['service', 'nginx', 'restart']
         p = subprocess.call(cmd)
         return True
@@ -206,27 +206,27 @@ def buildWebFiles(domain, file_prefix):
 
 
 def generateSSLCertificatte(domain, file_prefix):
-    print(colours.YELLOW + "Generating SSL Certificate " + colours.END)
+    print colours.YELLOW + "Generating SSL Certificate " + colours.END
     cmd = ['sudo', 'certbot', 'certonly', '--webroot', '-w', config()['root']['web'] + file_prefix + domain + '/web/', '-d', domain]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = p.communicate()[0]
     output = format(output)
 
     if "The following errors were reported by the server" in output:
-        print(output)
-        print()
-        print(colours.RED + "Error generating certificatei. Try running the command above in your terminal" + colours.END)
-        print()
+        print output
+        print
+        print colours.RED + "Error generating certificatei. Try running the command above in your terminal" + colours.END
+        print
         sys.exit()
 
     if "Congratulations!" in output:
-        print(colours.GREEN + 'SSL Certificate generated' + colours.END)
+        print colours.GREEN + 'SSL Certificate generated' + colours.END
         return
 
-    print(output)
-    print()
-    print(colours.RED +'OOPS! There may be an error configuring your SSL certificate for ' + colours.BLUE + 'http://' + domain + colours.END)
-    print()
+    print output
+    print
+    print colours.RED +'OOPS! There may be an error configuring your SSL certificate for ' + colours.BLUE + 'http://' + domain + colours.END
+    print
     sys.exit()
 
 
@@ -250,7 +250,7 @@ def deleteDomainVhost(domain, file_prefix):
 
     restartNginx(domain, file_prefix)
 
-    print (colours.RED + "Removed generated files" + colours.END )
+    print colours.RED + "Removed generated files" + colours.END
 
 
 def removeSSLCerttificate(domain):
